@@ -1,0 +1,3 @@
+[submodule "hloc_src"]
+	path = hloc_src
+	url = https://github.com/cvg/Hierarchical-Localization
