@@ -29,18 +29,19 @@ async def upload_data_set(uuid: UUID, images: Annotated[List[UploadFile], File(d
         if _data[1]:
             return ORJSONResponse({"status": "Not Accepting images anymore"})
         session_dataset = datasets / _data[0]
-        await session_dataset.mkdir(parents=True, exist_ok=True)
+        session_dataset_mapping = session_dataset / "mapping"
+        await session_dataset_mapping.mkdir(parents=True, exist_ok=True)
         _new = 0
         for image in images:
-            if image.content_type in ["image/jpeg", "image/png"]:
-                async with aiofiles.open((session_dataset /
+            if image.content_type == "image/jpeg":
+                async with aiofiles.open((session_dataset_mapping /
                                           (str(uuid4()) + "." + image.content_type.split("/")[1])),
                                          mode="wb"
                                          ) as img:
                     await img.write(await image.read())
                 _new += 1
         _saved = 0
-        async for _ in session_dataset.glob('*'):
+        async for _ in session_dataset_mapping.glob('*'):
             _saved += 1
         return ORJSONResponse(status_code=201, content={
             "no_of_files_already_present": _saved-_new,

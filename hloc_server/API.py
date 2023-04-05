@@ -6,6 +6,7 @@ from hloc_server import __version__, DATABASE
 from .helpers.api_key_helper import verify_api_key
 from .routers.session_route import SessionRouter
 from .routers.dataset_upload import DataSetRouter
+from .routers.map_generation_route import MapRouter
 from hloc_server import data, datasets, outputs
 
 HLoc = FastAPI(
@@ -42,3 +43,4 @@ async def add_process_time_header(request: Request, call_next):
 
 HLoc.include_router(SessionRouter)
 HLoc.include_router(DataSetRouter)
+HLoc.include_router(MapRouter)

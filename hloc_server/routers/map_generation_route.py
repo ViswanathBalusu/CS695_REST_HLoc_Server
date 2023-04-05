@@ -11,7 +11,7 @@ from hloc_src.hloc import extract_features, match_features, reconstruction, visu
 from hloc_src.hloc.visualization import plot_images, read_image
 from hloc_src.hloc.utils import viz_3d
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 MapRouter = APIRouter(
     prefix="/map/",
@@ -37,6 +37,7 @@ async def generate_map(uuid: UUID):
             return ORJSONResponse(content={"status": "Map already generated"})
         _no_images = 0
         _session_dataset = (datasets / str(_data[0]))
+        _session_dataset_mapping = _session_dataset / "mapping"
         async for _ in _session_dataset.glob('*'):
             _no_images += 1
         if _no_images > 0:
@@ -51,10 +52,20 @@ async def generate_map(uuid: UUID):
             feature_conf = extract_features.confs[_data[1]]
             matcher_conf = extract_features.confs[_data[2]]
             references = [path.relative_to(_session_dataset).as_posix()
-                          async for path in _session_dataset]
+                          async for path in _session_dataset_mapping.iterdir()]
             extract_features.main(feature_conf, _session_dataset, image_list=references, feature_path=_features)
             pairs_from_exhaustive.main(_sfm_pairs, image_list=references)
             match_features.main(matcher_conf, _sfm_pairs, features=_features, matches=_matches)
-
+            reconstruction.main(_sfm_dir,
+                                _session_dataset,
+                                _sfm_pairs,
+                                _features,
+                                _matches,
+                                image_list=references
+                                )
+            _update_q = update(UUIDS).where(UUIDS.c.uuid == str(uuid)).values(map_generated=True)
+            await DATABASE.execute(_update_q)
+            return ORJSONResponse(content={"status": "Extraction, Matching, SFM ran successfully, model generated and "
+                                                     "saved"})
     except Exception as e:
         print(e)
