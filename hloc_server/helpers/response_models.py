@@ -15,10 +15,11 @@ class SessionCreationResponse(BaseModel):
 
 
 class SessionGet(BaseModel):
-    uuid: UUID
+    uuid: str
     name: str
     extract_conf: str
     matcher_conf: str
+    dataset_dir: str
     map_generated: bool
     time_added: str
 

@@ -4,7 +4,12 @@ from fastapi.responses import ORJSONResponse
 from starlette.responses import StreamingResponse
 from ..helpers.database import UUIDS
 from uuid import UUID, uuid4
-from ..helpers.response_models import SessionCreationIn, SessionCreationResponse, SessionGetAll
+from hloc_server import DATABASE
+from ..helpers.response_models import SessionCreationIn, SessionCreationResponse, SessionGetAll, SessionGet
+from datetime import datetime
+from typing import List
+
+from sqlalchemy import select
 
 SessionRouter = APIRouter(
     prefix="/session",
@@ -21,41 +26,75 @@ SessionRouter = APIRouter(
 async def get_a_session(session_config: SessionCreationIn):
     try:
         _uuid = uuid4()
-        test = await UUIDS.objects.create(
+
+        _q = UUIDS.insert().values(
+            uuid=str(_uuid),
             name=session_config.name,
-            uuid=_uuid,
             extract_conf=session_config.extractor_config,
-            matcher_conf=session_config.matcher_config
+            dataset_dir=str(uuid4()),
+            map_generated=False,
+            matcher_conf=session_config.matcher_config,
+            time_added=datetime.now()
         )
+        _obj = await DATABASE.execute(_q)
+        return ORJSONResponse(content={"session_uuid": _uuid})
+    except Exception as e:
+        print(e)
+
+
+@SessionRouter.post(
+    "/copy/{uuid}",
+    response_class=ORJSONResponse,
+    response_model=SessionCreationResponse
+)
+async def copy_a_session(uuid: UUID, session_config: SessionCreationIn):
+    try:
+        _uuid = uuid4()
+        old_session_uuid = select(UUIDS.c.dataset_dir).where(UUIDS.c.uuid == str(uuid))
+        _data_dir = await DATABASE.fetch_val(old_session_uuid)
+
+        _q = UUIDS.insert().values(
+            uuid=str(_uuid),
+            name=session_config.name,
+            extract_conf=session_config.extractor_config,
+            dataset_dir=_data_dir,
+            map_generated=False,
+            matcher_conf=session_config.matcher_config,
+            time_added=datetime.now()
+        )
+        await DATABASE.execute(_q)
         return ORJSONResponse(content={"session_uuid": _uuid})
     except Exception as e:
         print(e)
 
 
 @SessionRouter.delete(
-    "/{uuid}",
+    "/delete/{uuid}",
     response_class=ORJSONResponse,
     response_model=SessionCreationResponse
 )
 async def delete_session(uuid: UUID):
     try:
-        await UUIDS.objects.filter(uuid=uuid).delete()
+        _q = UUIDS.delete().where(UUIDS.c.uuid == str(uuid))
+        await DATABASE.execute(_q)
         return ORJSONResponse(content={"session_uuid": uuid})
     except Exception as e:
         print(e)
 
 
-@SessionRouter.delete(
-    "/{uuid}",
+@SessionRouter.get(
+    "/get/{uuid}",
     response_class=ORJSONResponse,
-    response_model=SessionCreationResponse
+    response_model=SessionGet
 )
-async def delete_session(uuid: UUID):
+async def get_session(uuid: UUID):
     try:
-        await UUIDS.objects.filter(uuid=uuid).delete()
-        return ORJSONResponse(content={"session_uuid": uuid})
+        _session_q = UUIDS.select().where(UUIDS.c.uuid == str(uuid))
+        _session = await DATABASE.fetch_one(_session_q)
+        return ORJSONResponse(content=jsonable_encoder(_session))
     except Exception as e:
         print(e)
+
 
 @SessionRouter.get(
     "/all",
@@ -64,20 +103,25 @@ async def delete_session(uuid: UUID):
 )
 async def get_all_sessions():
     try:
-        _all = await UUIDS.objects.all()
-        return ORJSONResponse(content={"sessions": [jsonable_encoder(item) for item in _all]})
+        _all = UUIDS.select()
+        _data = await DATABASE.fetch_all(_all)
+        # if len(_data) == 0:
+        #     raise HTTPException(
+        #         status_code=404, detail={"status": "Nothing Found, Create a Session first"}
+        #     )
+        return ORJSONResponse(content={"sessions_available": [jsonable_encoder(data) for data in _data]})
     except Exception as e:
         print(e)
 
 
 @SessionRouter.delete(
     "/all",
-    response_class=ORJSONResponse,
-    response_model=SessionGetAll
+    response_class=ORJSONResponse
 )
 async def delete_all_sessions():
     try:
-        _all = await UUIDS.objects.all()
-        return ORJSONResponse(content={"sessions": [jsonable_encoder(item) for item in _all]})
+        _q = UUIDS.delete()
+        await DATABASE.execute(_q)
+        return ORJSONResponse(content={"result": "Deleted all the sessions"})
     except Exception as e:
         print(e)

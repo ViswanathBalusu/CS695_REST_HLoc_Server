@@ -2,9 +2,11 @@ import time
 from fastapi import FastAPI, Request, Security
 from fastapi.responses import RedirectResponse
 
-from hloc_server import __version__, models
+from hloc_server import __version__, DATABASE
 from .helpers.api_key_helper import verify_api_key
 from .routers.session_route import SessionRouter
+from .routers.dataset_upload import DataSetRouter
+from hloc_server import data, datasets, outputs
 
 HLoc = FastAPI(
     title="Hierarchical Localization",
@@ -17,8 +19,15 @@ HLoc = FastAPI(
 
 
 @HLoc.on_event("startup")
-async def database_init():
-    await models.create_all()
+async def database_dir_init():
+    await DATABASE.connect()
+    await outputs.mkdir(parents=True, exist_ok=True)
+    await datasets.mkdir(parents=True, exist_ok=True)
+
+
+@HLoc.on_event("shutdown")
+async def database_close():
+    await DATABASE.disconnect()
 
 
 #
@@ -32,3 +41,4 @@ async def add_process_time_header(request: Request, call_next):
 
 
 HLoc.include_router(SessionRouter)
+HLoc.include_router(DataSetRouter)

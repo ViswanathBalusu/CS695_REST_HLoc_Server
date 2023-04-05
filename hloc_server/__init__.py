@@ -1,9 +1,18 @@
 
 from databases import Database
 from orm import ModelRegistry
-
+from aiopath import AsyncPath
 
 __version__ = "0.0.1"
 API_KEY = "test"
-models = ModelRegistry(database=Database("sqlite:///./sessions.sqlite"))
+DB_URL = "sqlite:///./sessions.sqlite"
+DATABASE = Database(DB_URL)
 
+SFM_PAIRS = "pairs-sfm.txt"
+LOC_PAIRS = "pairs-loc.txt"
+SFM_DIR = "sfm"
+FEATURES = "features.h5"
+MATCHES = "matches.h5"
+data = AsyncPath("data")
+datasets = data / "datasets"
+outputs = data / "outputs"
