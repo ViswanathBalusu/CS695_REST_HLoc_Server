@@ -34,7 +34,8 @@ async def get_a_session(session_config: SessionCreationIn):
             dataset_dir=str(uuid4()),
             map_generated=False,
             matcher_conf=session_config.matcher_config,
-            time_added=datetime.now()
+            time_added=datetime.now(),
+            stop_data=False
         )
         _obj = await DATABASE.execute(_q)
         return ORJSONResponse(content={"session_uuid": _uuid})
@@ -60,7 +61,8 @@ async def copy_a_session(uuid: UUID, session_config: SessionCreationIn):
             dataset_dir=_data_dir,
             map_generated=False,
             matcher_conf=session_config.matcher_config,
-            time_added=datetime.now()
+            time_added=datetime.now(),
+            stop_data=False
         )
         await DATABASE.execute(_q)
         return ORJSONResponse(content={"session_uuid": _uuid})

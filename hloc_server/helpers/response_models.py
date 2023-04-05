@@ -22,6 +22,7 @@ class SessionGet(BaseModel):
     dataset_dir: str
     map_generated: bool
     time_added: str
+    stop_data: bool
 
 
 class SessionGetAll(BaseModel):
