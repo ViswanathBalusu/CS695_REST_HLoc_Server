@@ -13,12 +13,13 @@ from hloc_server import outputs, datasets, DATABASE, SFM_PAIRS, LOC_PAIRS, SFM_D
 from hloc_src.hloc import extract_features, match_features, reconstruction, visualization, pairs_from_exhaustive
 from hloc_src.hloc.visualization import plot_images, read_image
 from hloc_src.hloc.utils import viz_3d
-from pycolmap import infer_camera_from_image
+from pycolmap import infer_camera_from_image, Reconstruction
 from hloc_src.hloc.localize_sfm import QueryLocalizer, pose_from_cluster
 from sqlalchemy import select, update
+from pathlib import Path
 
 LocalizeRouter = APIRouter(
-    prefix="/localize/",
+    prefix="/localize",
     tags=["Localization route"],
     responses={404: {"error": "Not found"}},
 )
@@ -47,25 +48,43 @@ async def localize_image(uuid: UUID, image: Annotated[UploadFile, File(descripti
             return ORJSONResponse(content={"status": " Only Jpeg files are accepted"})
         q_uuid = uuid4()
         _query = "query/" + (str(q_uuid) + "." + "jpeg")
-        async with aiofiles.open(_query, mode="wb") as img:
+        async with aiofiles.open(_session_dataset / _query, mode="wb") as img:
             await img.write(await image.read())
 
         _session_outputs = outputs / str(uuid)
+        _session_outputs = Path(_session_outputs)
         _features = _session_outputs / FEATURES
         _matches = _session_outputs / MATCHES
         _sfm_pairs = _session_outputs / SFM_PAIRS
         _loc_pairs = _session_outputs / LOC_PAIRS
         _sfm_dir = _session_outputs / SFM_DIR
+        _query = Path(_query)
 
         feature_conf = extract_features.confs[_data[1]]
-        matcher_conf = extract_features.confs[_data[2]]
-        references = [path.relative_to(_session_dataset).as_posix()
-                      async for path in _session_dataset_mapping.iterdir()]
-
-        extract_features.main(feature_conf, _session_dataset, image_list=[_query], feature_path=_features, overwrite=True)
-        pairs_from_exhaustive.main(_loc_pairs, image_list=[_query], ref_list=references)
+        matcher_conf = match_features.confs[_data[2]]
+        _session_dataset = Path(_session_dataset)
+        _session_query = Path(_session_query)
+        extract_features.main(feature_conf,
+                              _session_dataset,
+                              image_list=[str(_query)],
+                              feature_path=_features,
+                              overwrite=True
+                              )
+        model = Reconstruction(_sfm_dir)
+        references_registered = [model.images[i].name for i in model.reg_image_ids()]
+        pairs_from_exhaustive.main(_loc_pairs, image_list=[str(_query)], ref_list=references_registered)
         match_features.main(matcher_conf, _loc_pairs, features=_features, matches=_matches, overwrite=True)
         _camera = infer_camera_from_image(_session_dataset / _query)
-
+        _ref_ids = [model.find_image_with_name(n).image_id for n in references_registered]
+        conf = {
+            'estimation': {'ransac': {'max_error': 12}},
+            'refinement': {'refine_focal_length': True, 'refine_extra_params': True},
+        }
+        localizer = QueryLocalizer(model, conf)
+        ret, log = pose_from_cluster(localizer, str(_query), _camera, _ref_ids, _features, _matches)
+        return ORJSONResponse(content={"pose": {
+            "tvec": ret["tvec"],
+            "qvec": ret["qvec"]
+        }})
     except Exception as e:
         print(e)
