@@ -20,7 +20,8 @@ UUIDS = sqlalchemy.Table(
     sqlalchemy.Column("dataset_dir", sqlalchemy.String(40)),
     sqlalchemy.Column("map_generated", sqlalchemy.Boolean),
     sqlalchemy.Column("time_added", sqlalchemy.DateTime),
-    sqlalchemy.Column("stop_data", sqlalchemy.Boolean)
+    sqlalchemy.Column("stop_data", sqlalchemy.Boolean),
+    sqlalchemy.Column("sfm_uploaded", sqlalchemy.Boolean),
 )
 
 engine = sqlalchemy.create_engine(DB_URL, connect_args={"check_same_thread": False})

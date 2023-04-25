@@ -23,6 +23,7 @@ class SessionGet(BaseModel):
     map_generated: bool
     time_added: str
     stop_data: bool
+    sfm_uploaded: bool
 
 
 class SessionGetAll(BaseModel):

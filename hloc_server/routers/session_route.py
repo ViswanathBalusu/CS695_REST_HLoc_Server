@@ -35,7 +35,8 @@ async def get_a_session(session_config: SessionCreationIn):
             map_generated=False,
             matcher_conf=session_config.matcher_config,
             time_added=datetime.now(),
-            stop_data=False
+            stop_data=False,
+            sfm_uploaded=False
         )
         _obj = await DATABASE.execute(_q)
         return ORJSONResponse(content={"session_uuid": _uuid})
@@ -62,7 +63,8 @@ async def copy_a_session(uuid: UUID, session_config: SessionCreationIn):
             map_generated=False,
             matcher_conf=session_config.matcher_config,
             time_added=datetime.now(),
-            stop_data=False
+            stop_data=False,
+            sfm_uploaded=False
         )
         await DATABASE.execute(_q)
         return ORJSONResponse(content={"session_uuid": _uuid})

@@ -29,7 +29,9 @@ LocalizeRouter = APIRouter(
     "/{uuid}",
     response_class=ORJSONResponse,
 )
-async def localize_image(uuid: UUID, image: Annotated[UploadFile, File(description="Upload the image that needs to be localized")]):
+async def localize_image(uuid: UUID,
+                         image: Annotated[UploadFile,
+                         File(description="Upload the image that needs to be localized")]):
     try:
         _session = select(
             UUIDS.c.dataset_dir,
@@ -39,7 +41,7 @@ async def localize_image(uuid: UUID, image: Annotated[UploadFile, File(descripti
         ).where(UUIDS.c.uuid == str(uuid))
         _data = await DATABASE.fetch_one(_session)
         if not _data[3]:
-            return ORJSONResponse(content={"status": "Map already not generated"})
+            return ORJSONResponse(content={"status": "Map already not uploaded/generated"})
         _session_dataset = (datasets / str(_data[0]))
         _session_dataset_mapping = _session_dataset / "mapping"
         _session_query = _session_dataset / "query"
