@@ -4,8 +4,6 @@ from fastapi.responses import RedirectResponse
 
 from hloc_server import __version__, DATABASE
 from .helpers.api_key_helper import verify_api_key
-from .routers.session_route import SessionRouter
-from .routers.dataset_upload import DataSetRouter
 from .routers import *
 from hloc_server import data, datasets, outputs
 
@@ -45,3 +43,4 @@ HLoc.include_router(SessionRouter)
 HLoc.include_router(DataSetRouter)
 HLoc.include_router(MapRouter)
 HLoc.include_router(LocalizeRouter)
+HLoc.include_router(PointCloudRouter)

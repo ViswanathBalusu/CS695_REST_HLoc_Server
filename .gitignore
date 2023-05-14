@@ -1,3 +1,4 @@
 data/*
 sessions.sqlite
 .idea
+venv/*

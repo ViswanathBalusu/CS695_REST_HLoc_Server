@@ -101,6 +101,7 @@ async def generate_map(uuid: UUID):
             _session_outputs = outputs / str(uuid)
             await _session_outputs.mkdir(parents=True, exist_ok=True)
             _session_outputs = Path(_session_outputs)
+            _session_dataset_mapping = Path(_session_dataset_mapping)
             _features = _session_outputs / FEATURES
             _matches = _session_outputs / MATCHES
             _sfm_pairs = _session_outputs / SFM_PAIRS
