@@ -1,6 +1,8 @@
 from fastapi import HTTPException, Security, status
 from fastapi.security.api_key import APIKeyQuery
+
 from hloc_server import API_KEY
+
 api_key_query_auth = APIKeyQuery(name="api_key", auto_error=True)
 
 

@@ -1,15 +1,20 @@
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from datetime import datetime
+from uuid import UUID, uuid4
+
+from fastapi import APIRouter
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import ORJSONResponse
-from starlette.responses import StreamingResponse
-from ..helpers.database import UUIDS
-from uuid import UUID, uuid4
-from hloc_server import DATABASE
-from ..helpers.response_models import SessionCreationIn, SessionCreationResponse, SessionGetAll, SessionGet
-from datetime import datetime
-from typing import List
-
 from sqlalchemy import select
+
+from hloc_server import DATABASE
+
+from ..helpers.database import UUIDS
+from ..helpers.response_models import (
+    SessionCreationIn,
+    SessionCreationResponse,
+    SessionGet,
+    SessionGetAll,
+)
 
 SessionRouter = APIRouter(
     prefix="/session",
@@ -19,9 +24,7 @@ SessionRouter = APIRouter(
 
 
 @SessionRouter.post(
-    "/create",
-    response_class=ORJSONResponse,
-    response_model=SessionCreationResponse
+    "/create", response_class=ORJSONResponse, response_model=SessionCreationResponse
 )
 async def get_a_session(session_config: SessionCreationIn):
     try:
@@ -36,9 +39,9 @@ async def get_a_session(session_config: SessionCreationIn):
             matcher_conf=session_config.matcher_config,
             time_added=datetime.now(),
             stop_data=False,
-            sfm_uploaded=False
+            sfm_uploaded=False,
         )
-        _obj = await DATABASE.execute(_q)
+        await DATABASE.execute(_q)
         return ORJSONResponse(content={"session_uuid": _uuid})
     except Exception as e:
         print(e)
@@ -47,7 +50,7 @@ async def get_a_session(session_config: SessionCreationIn):
 @SessionRouter.post(
     "/copy/{uuid}",
     response_class=ORJSONResponse,
-    response_model=SessionCreationResponse
+    response_model=SessionCreationResponse,
 )
 async def copy_a_session(uuid: UUID, session_config: SessionCreationIn):
     try:
@@ -64,7 +67,7 @@ async def copy_a_session(uuid: UUID, session_config: SessionCreationIn):
             matcher_conf=session_config.matcher_config,
             time_added=datetime.now(),
             stop_data=False,
-            sfm_uploaded=False
+            sfm_uploaded=False,
         )
         await DATABASE.execute(_q)
         return ORJSONResponse(content={"session_uuid": _uuid})
@@ -75,7 +78,7 @@ async def copy_a_session(uuid: UUID, session_config: SessionCreationIn):
 @SessionRouter.delete(
     "/delete/{uuid}",
     response_class=ORJSONResponse,
-    response_model=SessionCreationResponse
+    response_model=SessionCreationResponse,
 )
 async def delete_session(uuid: UUID):
     try:
@@ -87,9 +90,7 @@ async def delete_session(uuid: UUID):
 
 
 @SessionRouter.get(
-    "/get/{uuid}",
-    response_class=ORJSONResponse,
-    response_model=SessionGet
+    "/get/{uuid}", response_class=ORJSONResponse, response_model=SessionGet
 )
 async def get_session(uuid: UUID):
     try:
@@ -100,11 +101,7 @@ async def get_session(uuid: UUID):
         print(e)
 
 
-@SessionRouter.get(
-    "/all",
-    response_class=ORJSONResponse,
-    response_model=SessionGetAll
-)
+@SessionRouter.get("/all", response_class=ORJSONResponse, response_model=SessionGetAll)
 async def get_all_sessions():
     try:
         _all = UUIDS.select()
@@ -113,15 +110,14 @@ async def get_all_sessions():
         #     raise HTTPException(
         #         status_code=404, detail={"status": "Nothing Found, Create a Session first"}
         #     )
-        return ORJSONResponse(content={"sessions_available": [jsonable_encoder(data) for data in _data]})
+        return ORJSONResponse(
+            content={"sessions_available": [jsonable_encoder(data) for data in _data]}
+        )
     except Exception as e:
         print(e)
 
 
-@SessionRouter.delete(
-    "/all",
-    response_class=ORJSONResponse
-)
+@SessionRouter.delete("/all", response_class=ORJSONResponse)
 async def delete_all_sessions():
     try:
         _q = UUIDS.delete()

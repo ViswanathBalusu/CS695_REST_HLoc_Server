@@ -1,11 +1,11 @@
 import time
-from fastapi import FastAPI, Request, Security
-from fastapi.responses import RedirectResponse
 
-from hloc_server import __version__, DATABASE
+from fastapi import FastAPI, Request, Security
+
+from hloc_server import DATABASE, __version__, datasets, outputs
+
 from .helpers.api_key_helper import verify_api_key
 from .routers import *
-from hloc_server import data, datasets, outputs
 
 HLoc = FastAPI(
     title="Hierarchical Localization",

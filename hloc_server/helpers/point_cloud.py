@@ -1,13 +1,16 @@
+import os
 from json import JSONEncoder
 
-import numpy as np
-import os
-from hloc_src.hloc.utils import read_write_model
 import numpy
+import numpy as np
+
+from hloc_src.hloc.utils import read_write_model
 
 
 def get_point_cloud(base_bank_dir):
-    points = read_write_model.read_points3D_binary(os.path.join(base_bank_dir, "points3D.bin"))
+    points = read_write_model.read_points3D_binary(
+        os.path.join(base_bank_dir, "points3D.bin")
+    )
     return np.asarray([point3D.xyz for _, point3D in points.items()])
 
 
