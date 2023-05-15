@@ -7,9 +7,9 @@ import numpy as np
 from hloc_src.hloc.utils import read_write_model
 
 
-def get_point_cloud(base_bank_dir):
+def get_point_cloud(base_dir):
     points = read_write_model.read_points3D_binary(
-        os.path.join(base_bank_dir, "points3D.bin")
+        os.path.join(base_dir, "points3D.bin")
     )
     return np.asarray([point3D.xyz for _, point3D in points.items()])
 
