@@ -51,7 +51,7 @@ orjson==3.8.9
 orm==0.3.1
 outcome==1.2.0
 packaging==23.0
-Pillow==9.5.0
+Pillow==10.2.0
 pip==23.0.1
 plotly==5.14.0
 pycolmap==0.3.0
